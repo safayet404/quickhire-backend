@@ -204,7 +204,7 @@ class JobSeeder extends Seeder
             ],
         ];
 
-        DB::table('jobs')->insert($jobs);
+        DB::table('job_listings')->insert($jobs);
 
         $this->command->info('✅ ' . count($jobs) . ' jobs seeded successfully!');
     }
