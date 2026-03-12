@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('company_logo')->nullable();
             $table->string('location');
             $table->string('category');
-            $table->enum('type', ['full-time', 'part-time', 'remote', 'contract', 'internship'])->default('full-time');
+            $table->string('type')->default('full-time');
             $table->unsignedInteger('salary_min')->nullable();
             $table->unsignedInteger('salary_max')->nullable();
             $table->text('description');
