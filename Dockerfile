@@ -12,7 +12,8 @@ RUN apk add --no-cache \
     libpng-dev \
     libjpeg-turbo-dev \
     freetype-dev \
-    supervisor
+    supervisor \
+    postgresql-dev
 
 # Install PHP extensions
 RUN docker-php-ext-install \
