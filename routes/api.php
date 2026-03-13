@@ -36,22 +36,27 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
 
-    // Applications
+    // Seeker applications
     Route::post('/applications',             [ApplicationController::class, 'store']);
     Route::get('/seeker/applications',       [ApplicationController::class, 'myApplications']);
     Route::get('/seeker/applications/check', [ApplicationController::class, 'checkApplied']);
 
     // Saved jobs
-    Route::get('/saved-jobs',        [SavedJobController::class, 'index']);
-    Route::post('/saved-jobs/toggle',[SavedJobController::class, 'toggle']);
-    Route::get('/saved-jobs/check',  [SavedJobController::class, 'check']);
-    Route::get('/saved-jobs/ids',    [SavedJobController::class, 'ids']);
+    Route::get('/saved-jobs',         [SavedJobController::class, 'index']);
+    Route::post('/saved-jobs/toggle', [SavedJobController::class, 'toggle']);
+    Route::get('/saved-jobs/check',   [SavedJobController::class, 'check']);
+    Route::get('/saved-jobs/ids',     [SavedJobController::class, 'ids']);
 
     // Employer
     Route::prefix('employer')->group(function () {
-        Route::post('/jobs',        [JobController::class, 'store']);
-        Route::put('/jobs/{id}',    [JobController::class, 'update']);
-        Route::delete('/jobs/{id}', [JobController::class, 'destroy']);
+        Route::get('/stats',                        [JobController::class, 'employerStats']);
+        Route::get('/jobs',                         [JobController::class, 'employerJobs']);
+        Route::post('/jobs',                        [JobController::class, 'store']);
+        Route::put('/jobs/{id}',                    [JobController::class, 'update']);
+        Route::patch('/jobs/{id}/toggle',           [JobController::class, 'toggleActive']);
+        Route::delete('/jobs/{id}',                 [JobController::class, 'destroy']);
+        Route::get('/jobs/{id}/applications',       [JobController::class, 'jobApplications']);
+        Route::patch('/applications/{id}/status',   [ApplicationController::class, 'updateStatus']);
     });
 
     // Admin
