@@ -6,6 +6,7 @@ use App\Http\Controllers\JobController;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SavedJobController;
+use App\Http\Controllers\AdminController;
 
 // ── Auth ──────────────────────────────────────────────────────
 Route::prefix('auth')->group(function () {
@@ -49,18 +50,28 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Employer
     Route::prefix('employer')->group(function () {
-        Route::get('/stats',                        [JobController::class, 'employerStats']);
-        Route::get('/jobs',                         [JobController::class, 'employerJobs']);
-        Route::post('/jobs',                        [JobController::class, 'store']);
-        Route::put('/jobs/{id}',                    [JobController::class, 'update']);
-        Route::patch('/jobs/{id}/toggle',           [JobController::class, 'toggleActive']);
-        Route::delete('/jobs/{id}',                 [JobController::class, 'destroy']);
-        Route::get('/jobs/{id}/applications',       [JobController::class, 'jobApplications']);
-        Route::patch('/applications/{id}/status',   [ApplicationController::class, 'updateStatus']);
+        Route::get('/stats',                      [JobController::class, 'employerStats']);
+        Route::get('/jobs',                       [JobController::class, 'employerJobs']);
+        Route::post('/jobs',                      [JobController::class, 'store']);
+        Route::put('/jobs/{id}',                  [JobController::class, 'update']);
+        Route::patch('/jobs/{id}/toggle',         [JobController::class, 'toggleActive']);
+        Route::delete('/jobs/{id}',               [JobController::class, 'destroy']);
+        Route::get('/jobs/{id}/applications',     [JobController::class, 'jobApplications']);
+        Route::patch('/applications/{id}/status', [ApplicationController::class, 'updateStatus']);
     });
 
     // Admin
     Route::prefix('admin')->group(function () {
+        Route::get('/stats',                      [AdminController::class, 'stats']);
+
+        Route::get('/users',                      [AdminController::class, 'users']);
+        Route::patch('/users/{id}/role',          [AdminController::class, 'updateRole']);
+        Route::delete('/users/{id}',              [AdminController::class, 'deleteUser']);
+
+        Route::get('/jobs',                       [AdminController::class, 'jobs']);
+        Route::patch('/jobs/{id}/toggle',         [AdminController::class, 'toggleJob']);
+        Route::delete('/jobs/{id}',               [AdminController::class, 'deleteJob']);
+
         Route::get('/applications',               [ApplicationController::class, 'index']);
         Route::get('/applications/{id}',          [ApplicationController::class, 'show']);
         Route::patch('/applications/{id}/status', [ApplicationController::class, 'updateStatus']);
