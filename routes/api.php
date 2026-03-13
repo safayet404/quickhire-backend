@@ -33,11 +33,13 @@ Route::get('/companies/{id}', [ProfileController::class, 'companyShow']);
 Route::middleware('auth:sanctum')->group(function () {
 
     // Profile (seeker or employer based on role)
-    Route::get('/profile',  [ProfileController::class, 'show']);
-    Route::put('/profile',  [ProfileController::class, 'update']);
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::put('/profile', [ProfileController::class, 'update']);
 
-    // Applications (seeker)
-    Route::post('/applications', [ApplicationController::class, 'store']);
+    // Seeker: submit + track applications
+    Route::post('/applications',               [ApplicationController::class, 'store']);
+    Route::get('/seeker/applications',         [ApplicationController::class, 'myApplications']);
+    Route::get('/seeker/applications/check',   [ApplicationController::class, 'checkApplied']);
 
     // Employer job management
     Route::prefix('employer')->group(function () {
@@ -46,10 +48,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/jobs/{id}', [JobController::class, 'destroy']);
     });
 
-    // Admin
+    // Admin / Employer application management
     Route::prefix('admin')->group(function () {
-        Route::get('/applications',         [ApplicationController::class, 'index']);
-        Route::get('/applications/{id}',    [ApplicationController::class, 'show']);
-        Route::delete('/applications/{id}', [ApplicationController::class, 'destroy']);
+        Route::get('/applications',                        [ApplicationController::class, 'index']);
+        Route::get('/applications/{id}',                   [ApplicationController::class, 'show']);
+        Route::patch('/applications/{id}/status',          [ApplicationController::class, 'updateStatus']);
+        Route::delete('/applications/{id}',                [ApplicationController::class, 'destroy']);
     });
 });

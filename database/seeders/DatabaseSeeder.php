@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             JobSeeder::class,
             SeekerProfileSeeder::class,
             CompanyProfileSeeder::class,
+            ApplicationSeeder::class,
         ]);
     }
 }
