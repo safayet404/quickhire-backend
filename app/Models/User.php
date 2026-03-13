@@ -28,7 +28,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password'          => 'hashed',
         ];
     }
 
@@ -37,18 +37,26 @@ class User extends Authenticatable
     {
         return $this->role === 'admin';
     }
-
     public function isEmployer(): bool
     {
         return $this->role === 'employer';
     }
-
     public function isSeeker(): bool
     {
         return $this->role === 'seeker';
     }
 
-    // Relationships (we'll expand these in later steps)
+    // Relationships
+    public function seekerProfile()
+    {
+        return $this->hasOne(SeekerProfile::class);
+    }
+
+    public function companyProfile()
+    {
+        return $this->hasOne(CompanyProfile::class);
+    }
+
     public function jobListings()
     {
         return $this->hasMany(Job::class, 'user_id');
