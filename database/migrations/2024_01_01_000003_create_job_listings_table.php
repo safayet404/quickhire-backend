@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('job_listings', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null'); // employer who posted
             $table->string('title');
             $table->string('company');
             $table->string('company_logo')->nullable();

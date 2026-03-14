@@ -1,25 +1,87 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\ApplicationController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SavedJobController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\NotificationController;
 
-
-Route::prefix('jobs')->group(function () {
-    Route::get('/', [JobController::class, 'index']);
-    Route::get('/featured', [JobController::class, 'featured']);
-    Route::get('/categories', [JobController::class, 'categories']);
-    Route::get('/{id}', [JobController::class, 'show']);
+// ── Auth ──────────────────────────────────────────────────────
+Route::prefix('auth')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login',    [AuthController::class, 'login']);
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/me',      [AuthController::class, 'me']);
+    });
 });
 
-Route::post('/applications', [ApplicationController::class, 'store']);
+// ── Public jobs ───────────────────────────────────────────────
+Route::prefix('jobs')->group(function () {
+    Route::get('/',           [JobController::class, 'index']);
+    Route::get('/featured',   [JobController::class, 'featured']);
+    Route::get('/categories', [JobController::class, 'categories']);
+    Route::get('/{id}',       [JobController::class, 'show']);
+});
 
-Route::prefix('admin')->group(function () {
-    Route::post('/jobs', [JobController::class, 'store']);
-    Route::put('/jobs/{id}', [JobController::class, 'update']);
-    Route::delete('/jobs/{id}', [JobController::class, 'destroy']);
+// ── Public companies ──────────────────────────────────────────
+Route::get('/companies',      [ProfileController::class, 'companies']);
+Route::get('/companies/{id}', [ProfileController::class, 'companyShow']);
 
-    Route::get('/applications', [ApplicationController::class, 'index']);
-    Route::get('/applications/{id}', [ApplicationController::class, 'show']);
-    Route::delete('/applications/{id}', [ApplicationController::class, 'destroy']);
+// ── Authenticated ─────────────────────────────────────────────
+Route::middleware('auth:sanctum')->group(function () {
+
+    // Profile
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::put('/profile', [ProfileController::class, 'update']);
+
+    // Seeker applications
+    Route::post('/applications',             [ApplicationController::class, 'store']);
+    Route::get('/seeker/applications',       [ApplicationController::class, 'myApplications']);
+    Route::get('/seeker/applications/check', [ApplicationController::class, 'checkApplied']);
+
+    // Saved jobs
+    Route::get('/saved-jobs',         [SavedJobController::class, 'index']);
+    Route::post('/saved-jobs/toggle', [SavedJobController::class, 'toggle']);
+    Route::get('/saved-jobs/check',   [SavedJobController::class, 'check']);
+    Route::get('/saved-jobs/ids',     [SavedJobController::class, 'ids']);
+
+    // Notifications
+    Route::prefix('notifications')->group(function () {
+        Route::get('/',              [NotificationController::class, 'index']);
+        Route::get('/unread-count',  [NotificationController::class, 'unreadCount']);
+        Route::post('/read-all',     [NotificationController::class, 'markAllRead']);
+        Route::patch('/{id}/read',   [NotificationController::class, 'markRead']);
+        Route::delete('/{id}',       [NotificationController::class, 'destroy']);
+    });
+
+    // Employer
+    Route::prefix('employer')->group(function () {
+        Route::get('/stats',                      [JobController::class, 'employerStats']);
+        Route::get('/jobs',                       [JobController::class, 'employerJobs']);
+        Route::post('/jobs',                      [JobController::class, 'store']);
+        Route::put('/jobs/{id}',                  [JobController::class, 'update']);
+        Route::patch('/jobs/{id}/toggle',         [JobController::class, 'toggleActive']);
+        Route::delete('/jobs/{id}',               [JobController::class, 'destroy']);
+        Route::get('/jobs/{id}/applications',     [JobController::class, 'jobApplications']);
+        Route::patch('/applications/{id}/status', [ApplicationController::class, 'updateStatus']);
+    });
+
+    // Admin
+    Route::prefix('admin')->group(function () {
+        Route::get('/stats',                      [AdminController::class, 'stats']);
+        Route::get('/users',                      [AdminController::class, 'users']);
+        Route::patch('/users/{id}/role',          [AdminController::class, 'updateRole']);
+        Route::delete('/users/{id}',              [AdminController::class, 'deleteUser']);
+        Route::get('/jobs',                       [AdminController::class, 'jobs']);
+        Route::patch('/jobs/{id}/toggle',         [AdminController::class, 'toggleJob']);
+        Route::delete('/jobs/{id}',               [AdminController::class, 'deleteJob']);
+        Route::get('/applications',               [ApplicationController::class, 'index']);
+        Route::get('/applications/{id}',          [ApplicationController::class, 'show']);
+        Route::patch('/applications/{id}/status', [ApplicationController::class, 'updateStatus']);
+        Route::delete('/applications/{id}',       [ApplicationController::class, 'destroy']);
+    });
 });

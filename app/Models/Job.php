@@ -24,6 +24,7 @@ class Job extends Model
         'requirements',
         'is_featured',
         'is_active',
+        'user_id',
     ];
 
     protected $casts = [
