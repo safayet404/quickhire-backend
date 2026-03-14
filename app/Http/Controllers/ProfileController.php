@@ -51,21 +51,64 @@ class ProfileController extends Controller
     }
 
     // ── GET /api/companies ────────────────────────────────────
-    // Public list of all company profiles
     public function companies(Request $request)
     {
-        $companies = CompanyProfile::with('user')
-            ->orderBy('created_at', 'desc')
-            ->paginate(12);
+        $query = CompanyProfile::with('user')
+            ->orderBy('created_at', 'desc');
 
-        return response()->json($companies);
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->where(
+                fn($q) => $q
+                    ->where('company_name', 'like', "%{$s}%")
+                    ->orWhere('industry', 'like', "%{$s}%")
+                    ->orWhere('location', 'like', "%{$s}%")
+            );
+        }
+
+        if ($request->filled('industry')) {
+            $query->where('industry', $request->industry);
+        }
+
+        $companies = $query->paginate(12);
+
+        // Attach job count to each company
+        $items = collect($companies->items())->map(function ($company) {
+            $company->jobs_count = \App\Models\Job::where('user_id', $company->user_id)
+                ->where('is_active', true)->count();
+            return $company;
+        });
+
+        return response()->json([
+            'success'    => true,
+            'data'       => $items,
+            'pagination' => [
+                'total'        => $companies->total(),
+                'current_page' => $companies->currentPage(),
+                'last_page'    => $companies->lastPage(),
+            ],
+        ]);
     }
 
     // ── GET /api/companies/{id} ───────────────────────────────
     public function companyShow($id)
     {
         $company = CompanyProfile::with('user')->findOrFail($id);
-        return response()->json($company);
+
+        // Get active jobs for this company
+        $jobs = \App\Models\Job::where('user_id', $company->user_id)
+            ->where('is_active', true)
+            ->withCount('applications')
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data'    => array_merge($company->toArray(), [
+                'jobs'       => $jobs,
+                'jobs_count' => $jobs->count(),
+            ]),
+        ]);
     }
 
     // ─────────────────────────────────────────────────────────
