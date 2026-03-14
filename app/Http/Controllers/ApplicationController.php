@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Application;
 use App\Models\Job;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 
 class ApplicationController extends Controller
 {
     // ── POST /api/applications ────────────────────────────────
-    // Seeker submits an application (must be authenticated)
     public function store(Request $request)
     {
         $user = $request->user();
@@ -44,15 +44,36 @@ class ApplicationController extends Controller
             'status'      => 'pending',
         ]);
 
+        $application->load('job');
+
+        // ── Notify the seeker ─────────────────────────────────
+        Notification::create([
+            'user_id' => $user->id,
+            'type'    => 'application_submitted',
+            'title'   => 'Application Submitted',
+            'body'    => "Your application for \"{$application->job->title}\" at {$application->job->company} was received.",
+            'link'    => '/applications',
+        ]);
+
+        // ── Notify the employer ───────────────────────────────
+        if ($application->job->user_id) {
+            Notification::create([
+                'user_id' => $application->job->user_id,
+                'type'    => 'new_application',
+                'title'   => 'New Application Received',
+                'body'    => "{$request->name} applied for \"{$application->job->title}\".",
+                'link'    => '/dashboard/employer',
+            ]);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Application submitted successfully!',
-            'data'    => $application->load('job'),
+            'data'    => $application,
         ], 201);
     }
 
     // ── GET /api/seeker/applications ──────────────────────────
-    // Seeker sees their own applications with status
     public function myApplications(Request $request)
     {
         $applications = Application::with(['job'])
@@ -73,7 +94,6 @@ class ApplicationController extends Controller
     }
 
     // ── GET /api/seeker/applications/check?job_id=X ──────────
-    // Check if seeker already applied to a job
     public function checkApplied(Request $request)
     {
         $request->validate(['job_id' => 'required|integer']);
@@ -86,17 +106,12 @@ class ApplicationController extends Controller
     }
 
     // ── GET /api/admin/applications ───────────────────────────
-    // Admin / Employer sees all applications
     public function index(Request $request)
     {
         $query = Application::with(['job', 'user'])->latest();
 
-        if ($request->filled('job_id')) {
-            $query->where('job_id', $request->job_id);
-        }
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
+        if ($request->filled('job_id')) $query->where('job_id', $request->job_id);
+        if ($request->filled('status')) $query->where('status', $request->status);
 
         $applications = $query->paginate(20);
 
@@ -116,12 +131,10 @@ class ApplicationController extends Controller
     public function show($id)
     {
         $application = Application::with(['job', 'user'])->findOrFail($id);
-
         return response()->json(['success' => true, 'data' => $application]);
     }
 
-    // ── PATCH /api/admin/applications/{id}/status ─────────────
-    // Admin/Employer updates application status
+    // ── PATCH /api/employer/applications/{id}/status ──────────
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
@@ -129,11 +142,33 @@ class ApplicationController extends Controller
             'status_note' => 'nullable|string|max:1000',
         ]);
 
-        $application = Application::findOrFail($id);
+        $application = Application::with('job')->findOrFail($id);
+        $oldStatus   = $application->status;
+
         $application->update([
             'status'      => $request->status,
             'status_note' => $request->status_note,
         ]);
+
+        // ── Notify the seeker when status changes ─────────────
+        if ($oldStatus !== $request->status && $application->user_id) {
+            $statusLabels = [
+                'reviewed' => 'is being reviewed',
+                'accepted' => 'has been accepted 🎉',
+                'rejected' => 'was not selected this time',
+                'pending'  => 'is pending review',
+            ];
+            $label = $statusLabels[$request->status] ?? $request->status;
+            $jobTitle = $application->job?->title ?? 'your position';
+
+            Notification::create([
+                'user_id' => $application->user_id,
+                'type'    => 'application_status',
+                'title'   => 'Application Update',
+                'body'    => "Your application for \"{$jobTitle}\" {$label}.",
+                'link'    => '/applications',
+            ]);
+        }
 
         return response()->json([
             'success' => true,
@@ -146,7 +181,6 @@ class ApplicationController extends Controller
     public function destroy($id)
     {
         Application::findOrFail($id)->delete();
-
         return response()->json(['success' => true, 'message' => 'Application deleted.']);
     }
 }

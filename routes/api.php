@@ -7,6 +7,7 @@ use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SavedJobController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\NotificationController;
 
 // ── Auth ──────────────────────────────────────────────────────
 Route::prefix('auth')->group(function () {
@@ -48,6 +49,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/saved-jobs/check',   [SavedJobController::class, 'check']);
     Route::get('/saved-jobs/ids',     [SavedJobController::class, 'ids']);
 
+    // Notifications
+    Route::prefix('notifications')->group(function () {
+        Route::get('/',              [NotificationController::class, 'index']);
+        Route::get('/unread-count',  [NotificationController::class, 'unreadCount']);
+        Route::post('/read-all',     [NotificationController::class, 'markAllRead']);
+        Route::patch('/{id}/read',   [NotificationController::class, 'markRead']);
+        Route::delete('/{id}',       [NotificationController::class, 'destroy']);
+    });
+
     // Employer
     Route::prefix('employer')->group(function () {
         Route::get('/stats',                      [JobController::class, 'employerStats']);
@@ -63,15 +73,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin
     Route::prefix('admin')->group(function () {
         Route::get('/stats',                      [AdminController::class, 'stats']);
-
         Route::get('/users',                      [AdminController::class, 'users']);
         Route::patch('/users/{id}/role',          [AdminController::class, 'updateRole']);
         Route::delete('/users/{id}',              [AdminController::class, 'deleteUser']);
-
         Route::get('/jobs',                       [AdminController::class, 'jobs']);
         Route::patch('/jobs/{id}/toggle',         [AdminController::class, 'toggleJob']);
         Route::delete('/jobs/{id}',               [AdminController::class, 'deleteJob']);
-
         Route::get('/applications',               [ApplicationController::class, 'index']);
         Route::get('/applications/{id}',          [ApplicationController::class, 'show']);
         Route::patch('/applications/{id}/status', [ApplicationController::class, 'updateStatus']);
