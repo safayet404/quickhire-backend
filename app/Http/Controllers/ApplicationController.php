@@ -181,6 +181,6 @@ class ApplicationController extends Controller
     public function destroy($id)
     {
         Application::findOrFail($id)->delete();
-        return response()->json(['success' => true, 'message' => 'Application deleted.']);
+        return response()->json(['success' => true, 'message' => 'Application deleted']);
     }
 }
