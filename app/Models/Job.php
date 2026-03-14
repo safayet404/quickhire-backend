@@ -24,6 +24,7 @@ class Job extends Model
         'requirements',
         'is_featured',
         'is_active',
+        'user_id',
     ];
 
     protected $casts = [
@@ -41,7 +42,11 @@ class Job extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where(
+            'is_active',
+            'user_id',
+            true
+        );
     }
 
     public function scopeFeatured($query)
